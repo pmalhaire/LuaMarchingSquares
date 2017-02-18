@@ -11,12 +11,9 @@ local function drawGrid()
   for c=0, h do love.graphics.line(0, c * tileSize, width, c * tileSize) end
 end
 
-local function drawIsolines(layers)
+local function drawIsoline(layer)
   love.graphics.setColor(0, 127,0, 255)
-  
-  for l=1, #layers do
-    for p=1, #layers[l] do love.graphics.line(layers[l][p]) end
-  end
+    for p=1, #layer do love.graphics.line(layer[p]) end
 end
 
 function love.draw()
@@ -24,38 +21,67 @@ function love.draw()
   love.graphics.draw(canvas)
 end
 
+
+
 function love.load()
+
   package.path = package.path .. ";../src/?.lua"
   --package.path = package.path .. ";src/?.lua"
   local luams = require("luams")
   --luams.setVerbose(true)
   --luams.setInterpolate(false)
   
-  local data = {
-    {1, 1, 1, 1, 1},
-    {1, 2, 3, 2, 1},
-    {1, 3, 3, 3, 1},
-    {1, 2, 3, 2, 1},
-    {1, 1, 1, 1, 1},
-  }
-  local levels = {1, 1.4, 1.8, 2.2, 2.6}    
-  
-  layers = luams.getContour(data, levels)
-    
-  for l=1, #layers do
-    for p=1, #layers[l] do
-      for n=1, #layers[l][p], 2 do
-        local p = layers[l][p]        
-        p[n], p[n+1] = p[n] * tileSize, p[n+1] * tileSize        
-      end
+  local data = {}
+  local image_data = love.image.newImageData("test.jpg")
+  local thresold = 200
+  for i=1,image_data:getHeight()-1 do
+    local w = image_data:getWidth()-1
+    data[i] = {}
+    for j=1,w do
+        local r, g, b = image_data:getPixel( j , i )
+        if (r+g+b) < thresold then
+          data[i][j]=3
+        elseif (r+g+b) < 2*thresold then
+          data[i][j]=2
+         elseif (r+g+b) < thresold then
+          data[i][j]=1
+        else
+          data[i][j]=0
+        end
     end
   end
   
+  local levels = {}
+  for i=.1,3,1 do
+    levels[#levels+1] = i
+  end
+  
+  layers = luams.getContour(data, levels)   
+  --debug
+  if arg[#arg] == "-debug" then require("mobdebug").start() end
   canvas = love.graphics.newCanvas()
   love.graphics.setCanvas(canvas)
-  drawGrid()
-  drawIsolines(layers)
   love.graphics.setCanvas()
 end
 
---function love.update(dt) end
+local dtotal = 0 
+local dtrate = .2
+local layer_index = 1
+
+function love.update(dt)
+  dtotal = dtotal + dt
+  if dtotal > dtrate then
+    local layer = layers[layer_index]
+    
+    if layer then
+        canvas = love.graphics.newCanvas()
+        love.graphics.setCanvas(canvas)
+        drawIsoline(layer)
+        love.graphics.setCanvas()
+        layer_index = layer_index + 1
+    else
+      layer_index = 1
+    end
+    dtotal = 0
+  end
+end

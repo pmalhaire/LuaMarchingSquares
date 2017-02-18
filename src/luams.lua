@@ -85,7 +85,7 @@ local function traceSection(bitMaskLayers, i, r, c)
   and (r ~= r2 or c ~= c2) do
     currentCell = layer[r2] and layer[r2][c2]
     if not currentCell then 
-      print(r2 .. " " .. c2 .. " is undefined, stopping path!")
+      log(r2 .. " " .. c2 .. " is undefined, stopping path!")
       break
     end
     if currentCell.tile_id == 15 or currentCell.tile_id == 0 then
